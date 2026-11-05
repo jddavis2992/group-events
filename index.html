@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Group Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E4E8E6; --ink: #17212E; --muted: #55616D; --card: #F6F8F7; --line: #C6CFCC;
+  --focus: #2F6FED; --warn: #B4361D;
+  --hero: #2B3A4A; --hero-ink: #E6ECF1; --hero-title: #FFFFFF; --accent: #3F7FBF; --accent-ink: #FFFFFF;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E141B; --ink: #E9EEF2; --muted: #9EABB7; --card: #17212C; --line: #2A3744;
+    --focus: #7FA8FF; --warn: #FF9472; --accent: #6AA6D9; --accent-ink: #0D1B28;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E141B; --ink: #E9EEF2; --muted: #9EABB7; --card: #17212C; --line: #2A3744;
+  --focus: #7FA8FF; --warn: #FF9472; --accent: #6AA6D9; --accent-ink: #0D1B28;
+  color-scheme: dark;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 16px; line-height: 1.5; -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 580px; margin: 0 auto; padding: 26px 18px 40px; }
+h1, h2, h3 { font-family: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif; margin: 0; line-height: 1.08; letter-spacing: -0.02em; }
+h1 { font-size: clamp(2.1rem, 10vw, 3.1rem); font-weight: 800; }
+h2 { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+h3 { font-size: 1.1rem; font-weight: 800; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sub { margin: 8px 0 0; color: var(--muted); font-size: 1.1rem; }
+.hint { color: var(--muted); font-size: 0.92rem; margin: 6px 0 0; }
+.pre { white-space: pre-line; }
+.section { margin-top: 34px; }
+.mt { margin-top: 18px; }
+.back { display: inline-block; margin-bottom: 14px; color: var(--muted); text-decoration: none; font-weight: 600; padding: 8px 0; }
+.back:hover { color: var(--ink); }
+.status { min-height: 1.4em; margin-top: 10px; font-weight: 600; }
+.notice { background: var(--card); border-radius: 12px; padding: 12px 14px; margin-top: 14px; border-left: 6px solid var(--accent); }
+.flash { background: var(--card); border-radius: 12px; padding: 10px 14px; margin: 6px 0 4px; font-weight: 600; border-left: 6px solid var(--accent); }
+
+/* Themes set the hero colors and the accent for picks */
+.theme-default  { --hero:#2B3A4A; --hero-ink:#E6ECF1; --hero-title:#FFFFFF; --accent:#3F7FBF; --accent-ink:#FFFFFF; }
+.theme-harvest  { --hero:#E8B23C; --hero-ink:#4A2336; --hero-title:#3A1828; --accent:#E8B23C; --accent-ink:#3A1828; }
+.theme-bonfire  { --hero:#17212E; --hero-ink:#D3DAE1; --hero-title:#FFB98A; --accent:#F26A2E; --accent-ink:#1A0D05; }
+.theme-beach    { --hero:#0F6B73; --hero-ink:#F3EBD8; --hero-title:#FFF6DF; --accent:#F4B860; --accent-ink:#0B2E33; }
+.theme-holiday  { --hero:#1F4D3A; --hero-ink:#F6EEDC; --hero-title:#FFFFFF; --accent:#D94B3F; --accent-ink:#FFFFFF; }
+.theme-mission  { --hero:#123B6D; --hero-ink:#E3EEF9; --hero-title:#FFFFFF; --accent:#3FB3AA; --accent-ink:#05231F; }
+
+.hero { background: var(--hero); color: var(--hero-ink); border-radius: 18px; padding: 22px 20px 20px; }
+.hero h1 { color: var(--hero-title); }
+.hero p { margin: 10px 0 0; }
+.hero .meta { margin-top: 14px; display: grid; gap: 2px; font-weight: 500; }
+a.event { display: block; text-decoration: none; margin-top: 12px; background: var(--hero); color: var(--hero-ink); border-radius: 16px; padding: 16px 18px 15px; }
+a.event h3 { color: var(--hero-title); font-size: 1.45rem; }
+a.event .line { margin-top: 4px; opacity: .92; font-size: 0.95rem; }
+a.event .go { margin-top: 10px; font-weight: 600; font-size: 0.95rem; }
+a.event.closed { opacity: .65; }
+.pill { display: inline-block; font-family: "Instrument Sans", sans-serif; letter-spacing: 0; font-size: 0.8rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--hero-ink); color: var(--hero); margin-left: 8px; vertical-align: middle; }
+
+.card { background: var(--card); border-radius: 16px; padding: 16px 16px 18px; margin-top: 16px; }
+.results { margin-top: 16px; border-top: 2px dashed var(--line); padding-top: 12px; }
+.results h3 { font-family: "Instrument Sans", sans-serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 0; color: var(--muted); margin-bottom: 4px; }
+
+label.field, .field { display: block; font-weight: 600; margin: 14px 0 6px; }
+input[type="text"], input[type="password"], input[type="number"], textarea, select {
+  width: 100%; font: inherit; color: var(--ink); background: var(--bg);
+  border: 2px solid var(--line); border-radius: 10px; padding: 11px 13px;
+}
+textarea { resize: vertical; min-height: 92px; }
+input:focus, textarea:focus, select:focus { border-color: var(--focus); outline: none; }
+input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); flex: none; margin: 0; }
+.toggle { display: flex; gap: 10px; align-items: center; margin-top: 14px; }
+.toggle label { font-weight: 500; }
+
+.seg { display: grid; gap: 8px; }
+.seg button { font: inherit; font-weight: 600; cursor: pointer; min-height: 52px; padding: 8px 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); }
+.seg button[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; cursor: pointer; border-radius: 99px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); padding: 9px 14px; min-height: 44px; text-align: left; }
+.chip[aria-pressed="true"], .chip[aria-checked="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.chip[disabled] { opacity: .45; cursor: not-allowed; }
+.chip small { opacity: .8; margin-left: 2px; }
+.checks { list-style: none; margin: 0; padding: 0; }
+.checks li { display: flex; gap: 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.checks li:last-child { border-bottom: 0; }
+.checks label { flex: 1; }
+.info p { margin: 0 0 10px; white-space: pre-line; }
+.links { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.links a { font-weight: 600; text-underline-offset: 3px; }
+
+.cal-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cal-head .t { font-weight: 600; }
+.count { font-size: 0.9rem; color: var(--muted); }
+.month-bar { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 6px; }
+.month-name { font-weight: 600; font-size: 1.05rem; }
+.nav { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-size: 1.2rem; cursor: pointer; display: grid; place-items: center; flex: none; }
+.nav[disabled] { opacity: .3; cursor: default; }
+.grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.dow { text-align: center; font-size: 0.8rem; color: var(--muted); padding: 4px 0; }
+.day { aspect-ratio: 1 / 1; min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--ink); font: inherit; font-weight: 500; cursor: pointer; display: grid; place-items: center; }
+.day.off { color: var(--muted); opacity: .35; cursor: default; }
+.day.ok { background: color-mix(in srgb, var(--line) 55%, transparent); }
+.day.ok.wknd { box-shadow: inset 0 0 0 2px var(--line); }
+.day.ok:hover { background: var(--line); }
+.day.on { background: var(--accent); color: var(--accent-ink); font-weight: 700; box-shadow: none; }
+.legend { margin-top: 10px; font-size: 0.88rem; color: var(--muted); }
+
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.stepper { display: flex; align-items: center; gap: 14px; }
+.stepper output { min-width: 1.5ch; text-align: center; font-weight: 700; font-size: 1.2rem; }
+.strong { font-weight: 600; }
+
+.btn { font: inherit; font-weight: 600; cursor: pointer; border-radius: 12px; border: 2px solid var(--ink); padding: 12px 18px; min-height: 48px; background: var(--ink); color: var(--bg); width: 100%; margin-top: 14px; }
+.btn.small { width: auto; min-height: 44px; padding: 9px 16px; margin-top: 0; }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.mini { min-width: 44px; min-height: 44px; border-radius: 10px; border: 2px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-weight: 600; display: inline-grid; place-items: center; padding: 0 10px; cursor: pointer; text-decoration: none; }
+.mini[disabled] { opacity: .3; cursor: default; }
+.linkbtn { font: inherit; background: none; border: 0; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 10px 0; font-weight: 600; }
+.tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.addrow { display: grid; gap: 8px; margin-top: 12px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-bottom: 8px; }
+.stat { background: var(--bg); border-radius: 12px; padding: 10px 12px; }
+.stat .n { font-family: "Bricolage Grotesque", sans-serif; font-size: 1.7rem; font-weight: 800; line-height: 1; }
+.stat .l { font-size: 0.82rem; color: var(--muted); }
+.rank, .list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.rank li, .list li { background: var(--bg); border-radius: 10px; padding: 8px 12px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 600; }
+.bar { height: 6px; border-radius: 3px; background: var(--line); margin: 6px 0 4px; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+.names { font-size: 0.88rem; color: var(--muted); }
+.badge { font-size: 0.8rem; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--line); color: var(--ink); white-space: nowrap; }
+.badge.need { background: transparent; box-shadow: inset 0 0 0 2px var(--accent); }
+
+.savebar { position: sticky; bottom: 0; margin: 22px -18px 0; padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--bg); border-top: 2px solid var(--line); display: flex; align-items: center; gap: 12px; }
+.savebar .btn { width: auto; margin: 0; flex: none; }
+.savemsg { flex: 1; font-weight: 600; font-size: 0.95rem; }
+.savemsg.warn { color: var(--warn); }
+
+details.editor { background: var(--card); border-radius: 14px; margin-top: 12px; }
+details.editor summary { cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px; font-weight: 600; list-style: none; min-height: 52px; }
+details.editor summary::-webkit-details-marker { display: none; }
+.editor-body { padding: 0 16px 16px; }
+.foot { margin-top: 48px; border-top: 2px solid var(--line); padding-top: 12px; }
+.foot a { color: var(--muted); }
+/* Share buttons */
+.share { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.share .btn { width: auto; margin: 0; }
+a.btn.small { display: inline-block; }
+.btn.disabled { opacity: .45; pointer-events: none; }
+
+/* Host tools: numbered setup steps */
+.steps { margin: 8px 0 0; padding-left: 22px; }
+.steps li { margin: 6px 0; }
+
+/* Add to calendar block */
+.when { font-weight: 600; font-size: 1.1rem; margin: 0; }
+.calbtns { display: grid; gap: 8px; margin-top: 14px; }
+a.btn { display: block; text-align: center; text-decoration: none; margin-top: 0; }
+.timerow { display: flex; gap: 10px; align-items: center; }
+.timerow input { flex: 1; }
+
+/* Home page background photo */
+.photo-bg { position: fixed; inset: 0; z-index: -1; background-color: #10161D; background-size: cover; background-position: center; background-repeat: no-repeat; }
+.photo-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,12,18,.40) 0%, rgba(8,12,18,.68) 45%, rgba(8,12,18,.86) 100%); }
+.on-photo h1, .on-photo .sub, .on-photo .section > h2, .on-photo .section > .hint, .on-photo .foot a { color: #FFFFFF; text-shadow: 0 1px 14px rgba(0,0,0,.5); }
+.on-photo .sub { color: rgba(255,255,255,.9); }
+.on-photo .foot { border-top-color: rgba(255,255,255,.35); }
+.photo-preview { display: block; width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><p class="hint">Loading…</p></main>
+
+<script>
+"use strict";
+(() => {
+  /* ===================== Settings ===================== */
+  const API_URL = "https://script.google.com/macros/s/AKfycbwDhzWhzXcnT7xexbujkGtq4WOAdaoocC9j5YV5lW-JPD42_KHgaw1N5uEB6dxGlPLS/exec";                 // Paste your Apps Script web app URL (ends in /exec). See SETUP.md.
+  const DEFAULT_TITLE = "DR October 2026 Mission Trip";   // Used until the sheet's Settings tab loads
+  const DEFAULT_SUB = "Planning Group Events";
+  const REFRESH_MS = 45000;           // How often open pages pull in new answers
+
+  /* ===================== Small helpers ===================== */
+  const app = document.getElementById("app");
+  const PROPS = new Set(["value", "checked", "disabled", "hidden", "maxLength", "selected"]);
+  function h(tag, props, ...kids) {
+    const e = document.createElement(tag);
+    if (props) for (const k of Object.keys(props)) {
+      const v = props[k];
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else if (PROPS.has(k)) e[k] = v;
+      else e.setAttribute(k, v === true ? "" : String(v));
+    }
+    add(e, kids);
+    return e;
+  }
+  function add(parent, kid) {
+    if (kid == null || kid === false) return;
+    if (Array.isArray(kid)) { kid.forEach(k => add(parent, k)); return; }
+    parent.appendChild(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); return node; }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const clone = v => (v == null ? v : JSON.parse(JSON.stringify(v)));
+  const arr = v => (Array.isArray(v) ? v.map(String) : []);
+  const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+  const nameKey = s => String(s || "").trim().replace(/\s+/g, " ").toLowerCase();
+  const EMAIL_RE = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]{2,}$/;
+  const clampInt = (v, lo, hi, d) => { let n = parseInt(v, 10); if (isNaN(n)) n = d; return Math.min(hi, Math.max(lo, n)); };
+  const pct = f => Math.max(0, Math.min(100, Math.round(f * 100)));
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* storage can be unavailable */ } }
+  };
+  const session = {
+    get(k, d) { try { const v = sessionStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } },
+    set(k, v) { try { sessionStorage.setItem(k, v); } catch (e) { /* storage can be unavailable */ } },
+    del(k) { try { sessionStorage.removeItem(k); } catch (e) { /* storage can be unavailable */ } }
+  };
+
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const pad = n => (n < 10 ? "0" : "") + n;
+  const keyOf = (y, m, d) => `${y}-${pad(m)}-${pad(d)}`;
+  const parts = k => k.split("-").map(Number);
+  const toDate = k => { const p = parts(k); return new Date(p[0], p[1] - 1, p[2]); };
+  const pretty = k => toDate(k).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+  const todayKey = () => { const n = new Date(); return keyOf(n.getFullYear(), n.getMonth() + 1, n.getDate()); };
+  function monthsFrom(y, m, count) {
+    const list = [];
+    for (let i = 0; i < count; i++) { list.push([y, m]); m++; if (m > 12) { m = 1; y++; } }
+    return list;
+  }
+  function monthsBetween(first, last) {
+    const a = parts(first), b = parts(last);
+    const count = (b[0] - a[0]) * 12 + (b[1] - a[1]) + 1;
+    return monthsFrom(a[0], a[1], Math.max(1, Math.min(count, 24)));
+  }
+
+  const THEMES = [["default", "Classic"], ["harvest", "Harvest"], ["bonfire", "Bonfire night"], ["beach", "Beach day"], ["holiday", "Holiday"], ["mission", "Mission trip"]];
+  const themeOf = t => (THEMES.some(x => x[0] === t) ? t : "default");
+
+  /* ===================== Server calls ===================== */
+  function apiError(message, code) { const e = new Error(message); e.api = true; e.code = code || ""; return e; }
+  async function call(method, body) {
+    if (!API_URL) throw apiError("This page isn’t connected to its spreadsheet yet. The host needs to finish setup.", "setup");
+    const tries = method === "GET" ? 2 : 1;
+    for (let attempt = 0; attempt < tries; attempt++) {
+      const ctl = typeof AbortController === "function" ? new AbortController() : null;
+      const timer = ctl ? setTimeout(() => ctl.abort(), 20000) : null;
+      try {
+        const opts = method === "GET" ? {} : { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(body) };
+        if (ctl) opts.signal = ctl.signal;
+        const url = method === "GET" ? API_URL + (API_URL.includes("?") ? "&" : "?") + "t=" + Date.now() : API_URL;
+        const r = await fetch(url, opts);
+        const res = await r.json();
+        if (!res || res.ok !== true) throw apiError((res && res.error) || "Something went wrong. Please try again.", res && res.code);
+        return res;
+      } catch (err) {
+        if (err.api) throw err;
+        if (attempt + 1 < tries) { await wait(1500); continue; }
+        throw apiError("Couldn’t reach the server. Check your connection and try again.", "network");
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+  }
+
+  /* ===================== Data ===================== */
+  let data = null;      // what guests see
+  let hostData = null;  // what the host sees (includes hidden items)
+
+  function normalize(res) {
+    res = res || {};
+    const obj = v => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
+    const byOrder = (a, b) => a.order - b.order;
+    const sections = (res.sections || []).map(s => ({ id: String(s.id || ""), name: String(s.name || "Untitled section"), order: Number(s.order) || 0, status: String(s.status || "active") })).filter(s => s.id).sort(byOrder);
+    const events = (res.events || []).map(e => ({
+      id: String(e.id || ""), sectionId: String(e.sectionId || ""), title: String(e.title || "Untitled event"), theme: themeOf(e.theme),
+      description: String(e.description || ""), location: String(e.location || ""), time: String(e.time || ""),
+      order: Number(e.order) || 0, status: String(e.status || "open")
+    })).filter(e => e.id).sort(byOrder);
+    const blocks = (res.blocks || []).map(b => ({ id: String(b.id || ""), eventId: String(b.eventId || ""), type: String(b.type || ""), title: String(b.title || ""), order: Number(b.order) || 0, config: obj(b.config) }))
+      .filter(b => b.id && TYPES[b.type]).sort(byOrder);
+    const answers = (res.answers || []).map(a => ({ blockId: String(a.blockId || ""), name: String(a.name || ""), key: nameKey(a.name), answer: obj(a.answer) })).filter(a => a.blockId && a.name);
+    const rowsBy = {};
+    answers.forEach(a => { (rowsBy[a.blockId] = rowsBy[a.blockId] || []).push(a); });
+    return {
+      error: "", settings: obj(res.settings), sections, events, blocks, answers,
+      contacts: obj(res.contacts), lastReminders: obj(res.lastReminders), mailQuota: res.mailQuota == null ? null : Number(res.mailQuota),
+      groupme: obj(res.groupme), lastGroupMe: obj(res.lastGroupMe),
+      event: id => events.find(e => e.id === id) || null,
+      blocksOf: id => blocks.filter(b => b.eventId === id),
+      rowsOf: id => rowsBy[id] || []
+    };
+  }
+  async function refreshData() {
+    try { data = normalize(await call("GET")); return true; }
+    catch (err) { if (!data) { data = normalize({}); data.error = err.message; } return false; }
+  }
+  const siteTitle = () => (data && data.settings.siteTitle) || DEFAULT_TITLE;
+  const siteSub = () => (data && data.settings.siteSub) || DEFAULT_SUB;
+
+  /* Home page background photo: a file in the same folder as index.html, or an https:// link */
+  const PHOTO_RE = /^(https:\/\/[^\s"'()\\<>]+|[\w\-./]+\.(jpe?g|png|webp|avif|gif))$/i;
+  let photoEl = null;
+  function setPhoto(src, focus) {
+    const ok = !!src && PHOTO_RE.test(src);
+    app.classList.toggle("on-photo", ok);
+    if (!ok) { if (photoEl) photoEl.hidden = true; return; }
+    if (!photoEl) { photoEl = h("div", { class: "photo-bg", "aria-hidden": "true" }); document.body.insertBefore(photoEl, document.body.firstChild); }
+    photoEl.hidden = false;
+    photoEl.style.backgroundImage = `url("${src}")`;
+    photoEl.style.backgroundPosition = ["top", "center", "bottom"].includes(focus) ? `center ${focus}` : "center";
+  }
+
+  /* ===================== Shared pieces ===================== */
+  function stats(items) {
+    return h("div", { class: "stats" }, items.map(([n, l]) => h("div", { class: "stat" }, h("div", { class: "n" }, String(n)), h("div", { class: "l" }, l))));
+  }
+  const meter = f => h("div", { class: "bar" }, h("i", { style: `width:${pct(f)}%` }));
+  const row = (label, right, extra, needy) => h("li", null, h("div", { class: "top" }, h("span", null, label), right == null ? null : h("span", { class: needy ? "badge need" : "badge" }, right)), extra);
+
+  function mountCal(mount, cfg) {
+    // cfg: { title, months, allowed(key), selected: Set, single, onChange, legend }
+    let idx = 0;
+    if (cfg.selected.size) {
+      const first = [...cfg.selected].sort()[0], p = parts(first);
+      const i = cfg.months.findIndex(m => m[0] === p[0] && m[1] === p[1]);
+      if (i >= 0) idx = i;
+    } else {
+      const firstOk = cfg.months.findIndex(m => { const dim = new Date(m[0], m[1], 0).getDate(); for (let d = 1; d <= dim; d++) if (cfg.allowed(keyOf(m[0], m[1], d))) return true; return false; });
+      if (firstOk >= 0) idx = firstOk;
+    }
+    function draw(focusKey) {
+      clear(mount);
+      const ym = cfg.months[idx];
+      const n = cfg.selected.size;
+      const grid = h("div", { class: "grid" }, ["S", "M", "T", "W", "T", "F", "S"].map(d => h("div", { class: "dow", "aria-hidden": "true" }, d)));
+      const first = new Date(ym[0], ym[1] - 1, 1).getDay();
+      const dim = new Date(ym[0], ym[1], 0).getDate();
+      for (let i = 0; i < first; i++) grid.appendChild(h("div"));
+      for (let d = 1; d <= dim; d++) {
+        const key = keyOf(ym[0], ym[1], d);
+        const dow = new Date(ym[0], ym[1] - 1, d).getDay();
+        if (!cfg.allowed(key)) { grid.appendChild(h("button", { type: "button", class: "day off", disabled: true, "aria-label": pretty(key) + ", not an option" }, String(d))); continue; }
+        const on = cfg.selected.has(key);
+        grid.appendChild(h("button", {
+          type: "button", "data-d": key, "aria-pressed": on ? "true" : "false", "aria-label": pretty(key),
+          class: "day ok" + (dow === 0 || dow === 5 || dow === 6 ? " wknd" : "") + (on ? " on" : ""),
+          onclick: () => {
+            if (cfg.selected.has(key)) cfg.selected.delete(key);
+            else { if (cfg.single) cfg.selected.clear(); cfg.selected.add(key); }
+            if (cfg.onChange) cfg.onChange();
+            draw(key);
+          }
+        }, String(d)));
+      }
+      add(mount, [
+        h("div", { class: "cal-head" }, h("span", { class: "t" }, cfg.title), h("span", { class: "count" }, n ? plural(n, "day", "days") + " picked" : "No days yet")),
+        h("div", { class: "month-bar" },
+          h("button", { type: "button", class: "nav", "aria-label": "Previous month", disabled: idx === 0, onclick: () => { idx--; draw(); } }, "‹"),
+          h("div", { class: "month-name" }, `${MONTHS[ym[1] - 1]} ${ym[0]}`),
+          h("button", { type: "button", class: "nav", "aria-label": "Next month", disabled: idx >= cfg.months.length - 1, onclick: () => { idx++; draw(); } }, "›")),
+        grid,
+        cfg.legend ? h("div", { class: "legend" }, cfg.legend) : null
+      ]);
+      if (focusKey) { const f = mount.querySelector(`[data-d="${focusKey}"]`); if (f) f.focus(); }
+    }
+    draw();
+  }
+
+  /* ===================== Calendar helpers (Add to calendar block) ===================== */
+  const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const ZONE_RE = /^[A-Za-z_]+(\/[A-Za-z0-9_+\-]+){0,2}$/;
+  const ZONES = [["America/New_York", "Eastern"], ["America/Chicago", "Central"], ["America/Denver", "Mountain"], ["America/Phoenix", "Arizona"],
+    ["America/Los_Angeles", "Pacific"], ["America/Anchorage", "Alaska"], ["Pacific/Honolulu", "Hawaii"], ["America/Puerto_Rico", "Atlantic (Puerto Rico)"],
+    ["America/Santo_Domingo", "Dominican Republic"]];
+  const ALERTS = [["week", "1 week before"], ["day", "1 day before"], ["morning", "Morning of, 9 AM"], ["2h", "2 hours before"], ["30m", "30 minutes before"]];
+  const ALERT_WORDS = { week: "a week before", day: "the day before", morning: "the morning of", "2h": "2 hours before", "30m": "30 minutes before" };
+  const deviceZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } };
+  function zoneOk(tz) {
+    if (!tz || !ZONE_RE.test(tz)) return false;
+    try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return true; } catch (e) { return false; }
+  }
+  const zoneLabel = tz => { const z = ZONES.find(x => x[0] === tz); return z ? z[1] : tz.split("/").pop().replace(/_/g, " "); };
+  function zoneOffsetMin(utcMs, tz) {
+    const f = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const p = {};
+    f.formatToParts(new Date(utcMs)).forEach(x => { p[x.type] = x.value; });
+    return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second) - utcMs) / 60000;
+  }
+  function zonedUtc(dateKey, time, tz) {
+    const [y, m, d] = parts(dateKey), [hh, mm] = time.split(":").map(Number);
+    const guess = Date.UTC(y, m - 1, d, hh, mm);
+    const first = guess - zoneOffsetMin(guess, tz) * 60000;
+    return guess - zoneOffsetMin(first, tz) * 60000;
+  }
+  const addDays = (k, n) => { const d = toDate(k); d.setDate(d.getDate() + n); return keyOf(d.getFullYear(), d.getMonth() + 1, d.getDate()); };
+  // Works out the event's start and end from the block settings. Returns null until a date is set.
+  function calTimes(c) {
+    c = c || {};
+    if (!DATE_RE.test(String(c.date || ""))) return null;
+    const lastDay = DATE_RE.test(String(c.endDate || "")) && c.endDate > c.date ? c.endDate : c.date;
+    if (!TIME_RE.test(String(c.start || ""))) return { allDay: true, start: c.date, endExcl: addDays(lastDay, 1) };
+    const st = c.start;
+    let ek = lastDay, et = TIME_RE.test(String(c.end || "")) ? c.end : "";
+    if (!et) {
+      if (lastDay > c.date) et = st;
+      else {
+        const [sh, sm] = st.split(":").map(Number), total = sh * 60 + sm + 120;
+        ek = total >= 1440 ? addDays(c.date, 1) : c.date;
+        et = pad(Math.floor((total % 1440) / 60)) + ":" + pad(total % 60);
+      }
+    } else if (ek === c.date && et <= st) ek = addDays(c.date, 1); // ends after midnight
+    const tz = zoneOk(c.timeZone) ? c.timeZone : "";
+    return { allDay: false, startKey: c.date, startTime: st, endKey: ek, endTime: et, tz,
+      startUtc: tz ? zonedUtc(c.date, st, tz) : null, endUtc: tz ? zonedUtc(ek, et, tz) : null };
+  }
+  function fmtTime(t) {
+    const [hh, mm] = t.split(":").map(Number);
+    return new Date(2000, 0, 1, hh, mm).toLocaleTimeString("en-US", mm ? { hour: "numeric", minute: "2-digit" } : { hour: "numeric" });
+  }
+  function calWhen(c) {
+    const t = calTimes(c);
+    if (!t) return "";
+    if (t.allDay) { const last = addDays(t.endExcl, -1); return last === t.start ? pretty(t.start) : `${pretty(t.start)} to ${pretty(last)}`; }
+    let s = `${pretty(t.startKey)}, ${fmtTime(t.startTime)}`;
+    if (TIME_RE.test(String(c.end || "")) || t.endKey !== t.startKey) s += t.endKey === t.startKey ? ` to ${fmtTime(t.endTime)}` : ` to ${pretty(t.endKey)}, ${fmtTime(t.endTime)}`;
+    if (t.tz && t.tz !== deviceZone()) s += ` (${zoneLabel(t.tz)} time)`;
+    return s;
+  }
+  function activeAlerts(c, t) {
+    const ok = t.allDay ? ["week", "day", "morning"] : ["week", "day", "2h", "30m"].concat(t.tz && t.startTime > "09:00" ? ["morning"] : []);
+    return ALERTS.map(a => a[0]).filter(k => arr(c.alerts).includes(k) && ok.includes(k));
+  }
+  const utcStamp = ms => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const floatStamp = (k, t) => k.replace(/-/g, "") + "T" + t.replace(":", "") + "00";
+  const dateStamp = k => k.replace(/-/g, "");
+  const icsEscape = s => String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  function icsFold(line) {
+    const out = [];
+    while (line.length > 60) { out.push(line.slice(0, 60)); line = " " + line.slice(60); } // stays under the 75-byte limit
+    out.push(line);
+    return out.join("\r\n");
+  }
+  function calendarFile(block, ev, link) {
+    const c = block.config, t = calTimes(c);
+    const L = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Group Events Planner//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT",
+      `UID:${block.id}@group-events-planner`, "DTSTAMP:" + utcStamp(Date.now())];
+    if (t.allDay) L.push("DTSTART;VALUE=DATE:" + dateStamp(t.start), "DTEND;VALUE=DATE:" + dateStamp(t.endExcl));
+    else if (t.tz) L.push("DTSTART:" + utcStamp(t.startUtc), "DTEND:" + utcStamp(t.endUtc));
+    else L.push("DTSTART:" + floatStamp(t.startKey, t.startTime), "DTEND:" + floatStamp(t.endKey, t.endTime));
+    L.push("SUMMARY:" + icsEscape(ev.title));
+    if (ev.location) L.push("LOCATION:" + icsEscape(ev.location));
+    L.push("DESCRIPTION:" + icsEscape([c.notes, link].filter(Boolean).join("\n\n")));
+    if (link) L.push("URL:" + link);
+    const triggers = { week: t.allDay ? "-P6DT15H" : "-P7D", day: t.allDay ? "-PT15H" : "-P1D", "2h": "-PT2H", "30m": "-PT30M" };
+    activeAlerts(c, t).forEach(k => {
+      const trig = k === "morning" ? (t.allDay ? "TRIGGER:PT9H" : "TRIGGER;VALUE=DATE-TIME:" + utcStamp(zonedUtc(t.startKey, "09:00", t.tz))) : "TRIGGER:" + triggers[k];
+      L.push("BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + icsEscape(ev.title), trig, "END:VALARM");
+    });
+    L.push("END:VEVENT", "END:VCALENDAR");
+    return L.map(icsFold).join("\r\n") + "\r\n";
+  }
+  function googleCalLink(block, ev, link) {
+    const c = block.config, t = calTimes(c);
+    const dates = t.allDay ? `${dateStamp(t.start)}/${dateStamp(t.endExcl)}`
+      : t.tz ? `${utcStamp(t.startUtc)}/${utcStamp(t.endUtc)}` : `${floatStamp(t.startKey, t.startTime)}/${floatStamp(t.endKey, t.endTime)}`;
+    const q = new URLSearchParams({ action: "TEMPLATE", text: ev.title, dates, details: [c.notes, link].filter(Boolean).join("\n\n") });
+    if (ev.location) q.set("location", ev.location);
+    return "https://calendar.google.com/calendar/render?" + q.toString();
+  }
+  const eventLink = ev => location.href.split("#")[0] + "#/e/" + encodeURIComponent(ev.id);
+  // Opens WhatsApp (app on phones, WhatsApp Web on computers) with the message filled in.
+  const whatsappLink = text => "https://wa.me/?text=" + encodeURIComponent(text);
+  async function copyText(text) {
+    try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text); return true; } } catch (e) { /* fall through */ }
+    try {
+      const ta = h("textarea", { style: "position:fixed;top:-1000px;opacity:0", "aria-hidden": "true" });
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      const ok = document.execCommand && document.execCommand("copy");
+      ta.remove();
+      return !!ok;
+    } catch (e) { return false; }
+  }
+  function calTextFor(ev, source) {
+    const b = (source || data).blocksOf(ev.id).find(x => x.type === "calendar" && DATE_RE.test(String(x.config.date || "")));
+    return b ? calWhen(b.config) : "";
+  }
+
+  /* ===================== Block types =====================
+   * Each type can define:
+   *   label, hint          shown in host tools
+   *   fields               settings the host can edit (see fieldEditor for kinds)
+   *   defaults()           starting settings
+   *   display(block)       for read-only blocks (no answers)
+   *   respond(block, answer, set, ctx)   the input guests use; call set(newAnswer) on change
+   *   check(answer, block) return a message if the answer isn't ready to save
+   *   results(block, rows) the summary everyone sees
+   * To add a new type, add an entry here and the matching rules in Code.gs.
+   */
+  const TYPES = {
+    info: {
+      label: "Info", hint: "Details, instructions, or links. No answers needed.",
+      fields: [
+        { key: "text", kind: "textarea", label: "Text" },
+        { key: "links", kind: "links", label: "Links, one per line, like: Packing list | https://example.com" }
+      ],
+      defaults: () => ({ text: "", links: [] }),
+      display(block) {
+        const c = block.config;
+        const paras = String(c.text || "").split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+        const links = (Array.isArray(c.links) ? c.links : []).filter(l => l && /^https?:\/\//i.test(String(l.url || "")));
+        return h("div", { class: "info" }, paras.map(p => h("p", null, p)),
+          links.length ? h("ul", { class: "links" }, links.map(l => h("li", null, h("a", { href: String(l.url), target: "_blank", rel: "noopener noreferrer" }, String(l.label || l.url))))) : null);
+      }
+    },
+
+    rsvp: {
+      label: "RSVP", hint: "Going, maybe, or can’t make it, plus extra guests.",
+      fields: [
+        { key: "allowMaybe", kind: "toggle", label: "Offer a Maybe option" },
+        { key: "allowGuests", kind: "toggle", label: "Let people bring extra guests" },
+        { key: "maxGuests", kind: "number", label: "Most extra guests per person", min: 0, max: 20 }
+      ],
+      defaults: () => ({ allowMaybe: true, allowGuests: true, maxGuests: 5 }),
+      respond(block, ans, set) {
+        const c = block.config;
+        const a = { status: String((ans && ans.status) || ""), guests: clampInt(ans && ans.guests, 0, 20, 0) };
+        const opts = [["yes", "I’m going"]].concat(c.allowMaybe !== false ? [["maybe", "Maybe"]] : []).concat([["no", "Can’t make it"]]);
+        const max = c.allowGuests !== false ? clampInt(c.maxGuests, 0, 20, 5) : 0;
+        const emit = () => { set({ status: a.status, guests: a.guests }); draw(); };
+        const btns = opts.map(([v, l]) => h("button", { type: "button", role: "radio", onclick: () => { a.status = v; if (v === "no") a.guests = 0; emit(); } }, l));
+        const out = h("output", { "aria-live": "polite" }, "0");
+        const guests = h("div", { class: "row", style: "margin-top:14px" },
+          h("div", null, h("div", { class: "strong" }, "Extra guests"), h("div", { class: "hint", style: "margin:0" }, "Not counting you")),
+          h("div", { class: "stepper" },
+            h("button", { type: "button", class: "nav", "aria-label": "Fewer guests", onclick: () => { a.guests = Math.max(0, a.guests - 1); emit(); } }, "−"),
+            out,
+            h("button", { type: "button", class: "nav", "aria-label": "More guests", onclick: () => { a.guests = Math.min(max, a.guests + 1); emit(); } }, "+")));
+        function draw() {
+          btns.forEach((b, i) => b.setAttribute("aria-checked", opts[i][0] === a.status ? "true" : "false"));
+          guests.hidden = !(max > 0 && (a.status === "yes" || a.status === "maybe"));
+          out.textContent = String(a.guests);
+        }
+        draw();
+        return h("div", null, h("div", { class: "seg", role: "radiogroup", "aria-label": block.title || "RSVP", style: `grid-template-columns:repeat(${opts.length},1fr)` }, btns), guests);
+      },
+      check: (a, block) => (a && a.status ? "" : `Choose whether you can make it in “${block.title || "RSVP"}.”`),
+      results(block, rows) {
+        const by = s => rows.filter(r => r.answer.status === s);
+        const guestsOf = r => clampInt(r.answer.guests, 0, 20, 0);
+        const people = list => list.reduce((n, r) => n + 1 + guestsOf(r), 0);
+        const label = r => r.name + (guestsOf(r) ? ` +${guestsOf(r)}` : "");
+        const yes = by("yes"), maybe = by("maybe"), no = by("no");
+        const tiles = [[people(yes), "going"]].concat(block.config.allowMaybe !== false ? [[people(maybe), "maybe"]] : []).concat([[no.length, "can’t make it"]]);
+        const groups = [["Going", yes], ["Maybe", maybe], ["Can’t make it", no]].filter(g => g[1].length);
+        return h("div", null, stats(tiles), h("ul", { class: "list" }, groups.map(([l, list]) => row(l, String(list.length), h("div", { class: "names" }, list.map(label).join(", "))))));
+      }
+    },
+
+    dates: {
+      label: "Date picker", hint: "People tap the days that work for them.",
+      fields: [
+        { key: "days", kind: "days", label: "Date options" },
+        { key: "multi", kind: "toggle", label: "Let people pick more than one day" }
+      ],
+      defaults: () => ({ days: [], multi: true }),
+      respond(block, ans, set) {
+        const days = arr(block.config.days).filter(d => DATE_RE.test(d)).sort();
+        if (!days.length) return h("p", { class: "hint" }, "Date options are coming soon.");
+        const single = block.config.multi === false;
+        const sel = new Set(arr(ans && ans.days).filter(d => days.includes(d)));
+        const mount = h("div");
+        mountCal(mount, {
+          title: single ? "Pick the day that works best" : "Tap every day that works",
+          months: monthsBetween(days[0], days[days.length - 1]), allowed: k => days.includes(k), selected: sel, single,
+          onChange: () => set({ days: [...sel].sort() }), legend: "Outlined days are weekends."
+        });
+        return mount;
+      },
+      results(block, rows) {
+        const counts = {};
+        rows.forEach(r => arr(r.answer.days).forEach(d => { if (DATE_RE.test(d)) (counts[d] = counts[d] || []).push(r.name); }));
+        const days = Object.keys(counts).sort((a, b) => counts[b].length - counts[a].length || (a < b ? -1 : 1));
+        if (!days.length) return h("p", { class: "hint" }, "No days picked yet.");
+        const max = counts[days[0]].length;
+        return h("ul", { class: "rank" }, days.map(d => h("li", null,
+          h("div", { class: "top" }, h("span", null, pretty(d)), h("span", null, plural(counts[d].length, "person", "people"))),
+          meter(counts[d].length / max), h("div", { class: "names" }, counts[d].join(", ")))));
+      }
+    },
+
+    poll: {
+      label: "Poll", hint: "Ask a question with choices.",
+      fields: [
+        { key: "options", kind: "lines", label: "Choices, one per line" },
+        { key: "multi", kind: "toggle", label: "Let people pick more than one" },
+        { key: "allowOther", kind: "toggle", label: "Add a write-in “Other” answer" }
+      ],
+      defaults: () => ({ options: ["Option 1", "Option 2"], multi: false, allowOther: false }),
+      respond(block, ans, set) {
+        const c = block.config, options = arr(c.options), multi = !!c.multi;
+        const a = { choices: arr(ans && ans.choices).filter(x => options.includes(x)), other: String((ans && ans.other) || "") };
+        const emit = () => set({ choices: options.filter(o => a.choices.includes(o)), other: a.other });
+        const btns = options.map(o => h("button", {
+          type: "button", class: "chip", role: multi ? null : "radio",
+          onclick: () => {
+            if (multi) a.choices = a.choices.includes(o) ? a.choices.filter(x => x !== o) : a.choices.concat(o);
+            else a.choices = a.choices[0] === o ? [] : [o];
+            emit(); draw();
+          }
+        }, o));
+        function draw() { btns.forEach((b, i) => b.setAttribute(multi ? "aria-pressed" : "aria-checked", a.choices.includes(options[i]) ? "true" : "false")); }
+        draw();
+        const other = c.allowOther ? h("input", { type: "text", maxLength: 120, placeholder: "Other (write your own)", "aria-label": "Other answer", value: a.other, style: "margin-top:10px", oninput: e => { a.other = e.target.value.trim(); emit(); } }) : null;
+        return h("div", null, h("div", { class: "chips", role: multi ? "group" : "radiogroup", "aria-label": block.title || "Poll" }, btns),
+          h("p", { class: "hint" }, multi ? "Pick as many as you like." : "Pick one."), other);
+      },
+      results(block, rows) {
+        const options = arr(block.config.options);
+        const who = options.map(o => rows.filter(r => arr(r.answer.choices).includes(o)).map(r => r.name));
+        const max = Math.max(1, ...who.map(w => w.length));
+        const others = rows.filter(r => r.answer.other);
+        return h("div", null,
+          h("ul", { class: "rank" }, options.map((o, i) => h("li", null,
+            h("div", { class: "top" }, h("span", null, o), h("span", null, plural(who[i].length, "vote", "votes"))),
+            meter(who[i].length / max), who[i].length ? h("div", { class: "names" }, who[i].join(", ")) : null))),
+          others.length ? h("ul", { class: "list", style: "margin-top:8px" }, others.map(r => row(String(r.answer.other), "Other", h("div", { class: "names" }, r.name)))) : null);
+      }
+    },
+
+    signup: {
+      label: "Sign-up list", hint: "Things to bring or jobs to cover. Optionally cap how many people can take each one.",
+      fields: [{ key: "items", kind: "slots", label: "Items, one per line. Add x2 at the end to cap it at 2 people." }],
+      defaults: () => ({ items: [{ label: "Main dish", slots: 0 }, { label: "Side", slots: 0 }, { label: "Dessert", slots: 0 }, { label: "Drinks", slots: 0 }] }),
+      respond(block, ans, set, ctx) {
+        const items = (Array.isArray(block.config.items) ? block.config.items : []).filter(it => it && it.label);
+        const mine = new Set(arr(ans && ans.items));
+        const taken = it => ctx.rows().filter(r => r.key !== ctx.me() && arr(r.answer.items).includes(it.label)).length;
+        const full = it => it.slots > 0 && taken(it) >= it.slots;
+        const views = items.map(it => {
+          const small = h("small");
+          const b = h("button", {
+            type: "button", class: "chip",
+            onclick: () => {
+              if (mine.has(it.label)) mine.delete(it.label);
+              else { if (full(it)) return; mine.add(it.label); }
+              set({ items: items.map(x => x.label).filter(l => mine.has(l)) });
+              draw();
+            }
+          }, it.label, small);
+          return { it, b, small };
+        });
+        function draw() {
+          views.forEach(({ it, b, small }) => {
+            const on = mine.has(it.label), n = taken(it);
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+            b.disabled = !on && full(it);
+            small.textContent = it.slots ? ` (${Math.min(it.slots, n + (on ? 1 : 0))} of ${it.slots})` : (n ? ` (${n} signed up)` : "");
+          });
+        }
+        draw();
+        const out = h("div", null, h("div", { class: "chips", role: "group", "aria-label": block.title || "Sign-up list" }, views.map(v => v.b)),
+          h("p", { class: "hint" }, "Tap what you’ll bring or cover. Tap again to undo."));
+        out._refresh = draw;
+        return out;
+      },
+      results(block, rows) {
+        const items = (Array.isArray(block.config.items) ? block.config.items : []).filter(it => it && it.label);
+        return h("ul", { class: "list" }, items.map(it => {
+          const who = rows.filter(r => arr(r.answer.items).includes(it.label)).map(r => r.name);
+          const badge = it.slots ? (who.length >= it.slots ? "Full" : `${who.length} of ${it.slots}`) : (who.length ? `${who.length} signed up` : "Still needed");
+          return row(it.label, badge, who.length ? h("div", { class: "names" }, who.join(", ")) : null, !who.length);
+        }));
+      }
+    },
+
+    checklist: {
+      label: "Checklist", hint: "A personal checklist everyone works through, like a packing list.",
+      fields: [{ key: "items", kind: "lines", label: "Items, one per line" }],
+      defaults: () => ({ items: ["Item 1", "Item 2"] }),
+      respond(block, ans, set) {
+        const items = arr(block.config.items);
+        const done = new Set(arr(ans && ans.checked));
+        return h("ul", { class: "checks" }, items.map((it, i) => {
+          const id = `ck-${block.id}-${i}`;
+          return h("li", null,
+            h("input", { type: "checkbox", id, checked: done.has(it), onchange: e => { if (e.target.checked) done.add(it); else done.delete(it); set({ checked: items.filter(x => done.has(x)) }); } }),
+            h("label", { for: id }, it));
+        }));
+      },
+      results(block, rows) {
+        const items = arr(block.config.items), total = items.length;
+        return h("ul", { class: "list" }, rows.slice().sort((a, b) => a.name.localeCompare(b.name)).map(r => {
+          const n = arr(r.answer.checked).filter(x => items.includes(x)).length;
+          return row(r.name, total && n === total ? "All done" : `${n} of ${total}`, meter(total ? n / total : 0));
+        }));
+      }
+    },
+
+    question: {
+      label: "Question", hint: "An open answer, like allergies, shirt size, or arrival time.",
+      fields: [
+        { key: "placeholder", kind: "text", label: "Example answer (optional)" },
+        { key: "long", kind: "toggle", label: "Allow a long answer" }
+      ],
+      defaults: () => ({ placeholder: "", long: false }),
+      respond(block, ans, set) {
+        const c = block.config;
+        const props = { maxLength: 1000, placeholder: String(c.placeholder || "Your answer"), "aria-label": block.title || "Your answer", value: String((ans && ans.text) || ""), oninput: e => set({ text: e.target.value }) };
+        return c.long ? h("textarea", props) : h("input", Object.assign({ type: "text" }, props));
+      },
+      results(block, rows) {
+        const answered = rows.filter(r => String(r.answer.text || "").trim());
+        if (!answered.length) return h("p", { class: "hint" }, "No answers yet.");
+        return h("ul", { class: "list" }, answered.map(r => h("li", null, h("div", { class: "strong" }, r.name), h("div", { class: "pre" }, String(r.answer.text)))));
+      }
+    },
+
+    calendar: {
+      label: "Add to calendar", hint: "Once the date is final, guests save it to their phone calendar, which reminds them automatically.",
+      fields: [
+        { key: "date", kind: "day", label: "Event date" },
+        { key: "start", kind: "time", label: "Start time (leave empty for an all-day event)" },
+        { key: "end", kind: "time", label: "End time (optional)" },
+        { key: "endDate", kind: "day", label: "Last day, only for events that span several days" },
+        { key: "timeZone", kind: "zone", label: "Time zone where the event happens" },
+        { key: "alerts", kind: "choices", label: "Remind guests", options: ALERTS },
+        { key: "notes", kind: "textarea", label: "Notes for the calendar entry (optional)" }
+      ],
+      defaults: () => ({ date: "", endDate: "", start: "", end: "", timeZone: zoneOk(deviceZone()) ? deviceZone() : "America/New_York", alerts: ["day"], notes: "" }),
+      display(block) {
+        const ev = data && data.event(block.eventId);
+        const t = calTimes(block.config);
+        if (!t || !ev) return h("p", { class: "hint", style: "margin:0" }, "The date isn’t set yet. Check back soon.");
+        const link = eventLink(ev);
+        const file = "data:text/calendar;charset=utf-8," + encodeURIComponent(calendarFile(block, ev, link));
+        const fname = (ev.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "event") + ".ics";
+        const words = activeAlerts(block.config, t).map(k => ALERT_WORDS[k]);
+        const when = words.length > 2 ? words.slice(0, -1).join(", ") + ", and " + words[words.length - 1]
+          : words.join(" and ");
+        return h("div", null,
+          h("p", { class: "when" }, calWhen(block.config)),
+          ev.location ? h("p", { class: "hint", style: "margin-top:2px" }, ev.location) : null,
+          h("div", { class: "calbtns" },
+            h("a", { class: "btn", href: file, download: fname }, "Apple Calendar or Outlook"),
+            h("a", { class: "btn ghost", href: googleCalLink(block, ev, link), target: "_blank", rel: "noopener noreferrer" }, "Google Calendar")),
+          h("p", { class: "hint" }, (when ? `Your phone will remind you ${when}. ` : "") + "Google Calendar uses your usual notification settings. If a button doesn’t open, open this page in Safari or Chrome."));
+      }
+    }
+  };
+
+  /* ===================== Guest views ===================== */
+  function eventCard(ev) {
+    const rsvp = data.blocksOf(ev.id).find(b => b.type === "rsvp");
+    let going = "";
+    if (rsvp) {
+      const n = data.rowsOf(rsvp.id).filter(r => r.answer.status === "yes").reduce((s, r) => s + 1 + clampInt(r.answer.guests, 0, 20, 0), 0);
+      going = `${n} going. `;
+    }
+    const when = calTextFor(ev) || ev.time;
+    return h("a", { class: "event theme-" + ev.theme + (ev.status === "closed" ? " closed" : ""), href: "#/e/" + encodeURIComponent(ev.id) },
+      h("h3", null, ev.title, ev.status === "closed" ? h("span", { class: "pill" }, "Closed") : null),
+      when ? h("div", { class: "line" }, when) : null,
+      ev.location ? h("div", { class: "line" }, ev.location) : null,
+      h("div", { class: "go" }, going + (ev.status === "open" ? "Tap to respond" : "Tap to see responses")));
+  }
+
+  function viewHome() {
+    function render() {
+      clear(app);
+      setPhoto(data.settings.homePhoto, data.settings.homePhotoFocus);
+      document.title = siteTitle();
+      add(app, h("header", null, h("h1", null, siteTitle()), siteSub() ? h("p", { class: "sub" }, siteSub()) : null));
+      if (data.error) add(app, h("div", { class: "notice" }, data.error));
+      else {
+        const known = new Set(data.sections.map(s => s.id));
+        const groups = data.sections.map(s => ({ name: s.name, events: data.events.filter(e => e.sectionId === s.id) }));
+        const loose = data.events.filter(e => !known.has(e.sectionId));
+        if (loose.length) groups.push({ name: data.sections.length ? "More events" : "Events", events: loose });
+        if (!groups.length) add(app, h("p", { class: "hint section" }, "No events yet. Check back soon."));
+        groups.forEach(g => add(app, h("section", { class: "section" }, h("h2", null, g.name),
+          g.events.length ? g.events.map(eventCard) : h("p", { class: "hint" }, "No events in this section yet."))));
+      }
+      add(app, h("div", { class: "foot" }, h("a", { href: "#/host" }, "Host tools")));
+    }
+    render();
+    return { refresh: render };
+  }
+
+  function viewEvent(id) {
+    clear(app);
+    add(app, h("a", { class: "back", href: "#/" }, "‹ All events"));
+    const ev = data.event(id);
+    if (!ev) { add(app, h("div", { class: "notice" }, data.error || "We couldn’t find that event. It may have been moved or removed.")); return null; }
+    document.title = `${ev.title} | ${siteTitle()}`;
+    const open = ev.status === "open";
+    const blocks = data.blocksOf(ev.id);
+    const answerable = blocks.filter(b => !TYPES[b.type].display);
+    const state = { name: store.get("planner-name", ""), answers: {}, dirty: new Set() };
+    const root = h("div", { class: "theme-" + ev.theme });
+    add(app, root);
+
+    const finalDate = calTextFor(ev);
+    add(root, h("section", { class: "hero" }, h("h1", null, ev.title),
+      ev.description ? h("p", { class: "pre" }, ev.description) : null,
+      finalDate || ev.time || ev.location ? h("div", { class: "meta" }, finalDate ? h("div", null, finalDate) : null, ev.time ? h("div", null, ev.time) : null, ev.location ? h("div", null, ev.location) : null) : null));
+    const shareText = [ev.title, finalDate, ev.location].filter(Boolean).join("\n") + "\n\nRSVP here: " + eventLink(ev);
+    const copyBtn = h("button", { type: "button", class: "btn small ghost", onclick: async () => {
+      const ok = await copyText(eventLink(ev));
+      copyBtn.textContent = ok ? "Link copied" : "Couldn’t copy";
+      setTimeout(() => { copyBtn.textContent = "Copy link"; }, 2000);
+    } }, "Copy link");
+    add(root, h("div", { class: "share" },
+      h("a", { class: "btn small ghost", href: whatsappLink(shareText), target: "_blank", rel: "noopener noreferrer" }, "Share on WhatsApp"), copyBtn));
+    if (session.get("planner-pass", "")) add(root, h("p", { class: "hint" }, h("a", { href: "#/host/e/" + encodeURIComponent(ev.id) }, "Edit this event")));
+    if (!open) add(root, h("div", { class: "notice" }, "This event isn’t taking answers right now. You can still see everyone’s responses."));
+
+    let nameInput = null, welcome = null, emailInput = null, emailDirty = false;
+    if (open && answerable.length) {
+      nameInput = h("input", { type: "text", id: "f-name", maxLength: 60, autocomplete: "name", placeholder: "First and last name", value: state.name });
+      welcome = h("p", { class: "hint", "aria-live": "polite" });
+      emailInput = h("input", { type: "email", id: "f-email", maxLength: 254, autocomplete: "email", inputmode: "email", autocapitalize: "off", spellcheck: "false", placeholder: "you@example.com", value: store.get("planner-email", "") });
+      add(root, h("section", { class: "card" }, h("h2", null, "Your name"),
+        h("label", { class: "field", for: "f-name", style: "margin-top:0;font-weight:500" }, "Use the same name each time so your answers stay together."), nameInput, welcome,
+        h("label", { class: "field", for: "f-email" }, "Email for reminders (optional)"), emailInput,
+        h("p", { class: "hint" }, "Only the host can see it, and every reminder has an unsubscribe link.")));
+      emailInput.addEventListener("input", () => { emailDirty = true; markDirty(); });
+    }
+
+    const cards = blocks.map(block => {
+      const T = TYPES[block.type];
+      const card = h("section", { class: "card", id: "b-" + block.id }, block.title ? h("h2", null, block.title) : null);
+      add(root, card);
+      if (T.display) { add(card, T.display(block)); return { block, refresh() {}, reload() {}, live() {} }; }
+      const slot = h("div"), res = h("div", { class: "results" });
+      add(card, [slot, res]);
+      let input = null;
+      const ctx = { me: () => nameKey(state.name), rows: () => data.rowsOf(block.id) };
+      const set = a => { state.answers[block.id] = a; state.dirty.add(block.id); markDirty(); };
+      function reload() { if (!open) return; clear(slot); input = T.respond(block, state.answers[block.id], set, ctx); add(slot, input); }
+      function refresh() {
+        clear(res);
+        const rows = data.rowsOf(block.id);
+        if (!rows.length) { add(res, h("p", { class: "hint", style: "margin:0" }, "No responses yet.")); return; }
+        add(res, [h("h3", null, plural(rows.length, "response", "responses")), T.results(block, rows)]);
+      }
+      function live() { if (input && input._refresh) input._refresh(); }
+      reload(); refresh();
+      return { block, refresh, reload, live };
+    });
+    if (!blocks.length) add(root, h("p", { class: "hint section" }, "Details are coming soon."));
+
+    let saveBtn = null, saveMsg = null;
+    if (nameInput) {
+      saveMsg = h("span", { class: "savemsg", role: "status", "aria-live": "polite" }, "No changes yet");
+      saveBtn = h("button", { type: "button", class: "btn", onclick: save }, "Save my answers");
+      add(root, h("div", { class: "savebar" }, saveMsg, saveBtn));
+    }
+    function markDirty() { if (saveMsg) { saveMsg.textContent = "Unsaved changes"; saveMsg.classList.add("warn"); } }
+
+    function applyName() {
+      const k = nameKey(state.name);
+      let found = 0;
+      cards.forEach(c => {
+        if (TYPES[c.block.type].display) return;
+        const prior = k ? data.rowsOf(c.block.id).find(r => r.key === k) : null;
+        if (prior) found++;
+        if (state.dirty.has(c.block.id)) { c.live(); return; }
+        const next = prior ? clone(prior.answer) : undefined;
+        if (JSON.stringify(next) !== JSON.stringify(state.answers[c.block.id])) { state.answers[c.block.id] = next; c.reload(); }
+        else c.live();
+      });
+      if (welcome) welcome.textContent = found ? "Welcome back. Your earlier answers are filled in." : "";
+    }
+    let nameTimer = null;
+    if (nameInput) nameInput.addEventListener("input", () => {
+      state.name = nameInput.value.trim().replace(/\s+/g, " ");
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(applyName, 300);
+    });
+    applyName();
+
+    let saving = false;
+    async function save() {
+      if (saving) return;
+      state.name = nameInput.value.trim().replace(/\s+/g, " ");
+      if (!state.name) { saveMsg.textContent = "Add your name first."; saveMsg.classList.add("warn"); nameInput.focus(); return; }
+      const email = emailInput ? emailInput.value.trim() : "";
+      if (email && !EMAIL_RE.test(email)) { saveMsg.textContent = "That email address doesn’t look right."; saveMsg.classList.add("warn"); emailInput.focus(); return; }
+      if (!state.dirty.size && !(emailDirty && email)) { saveMsg.textContent = "Nothing new to save."; saveMsg.classList.remove("warn"); return; }
+      const answers = {};
+      for (const bid of state.dirty) {
+        const block = blocks.find(b => b.id === bid);
+        const T = TYPES[block.type];
+        const msg = T.check ? T.check(state.answers[bid], block) : "";
+        if (msg) {
+          saveMsg.textContent = msg; saveMsg.classList.add("warn");
+          const el = document.getElementById("b-" + bid);
+          if (el) el.scrollIntoView({ block: "center" });
+          return;
+        }
+        answers[bid] = state.answers[bid] || {};
+      }
+      saving = true; saveBtn.disabled = true;
+      saveMsg.classList.remove("warn"); saveMsg.textContent = "Saving…";
+      try {
+        await call("POST", { action: "respond", eventId: ev.id, name: state.name, answers, email: email || undefined });
+        store.set("planner-name", state.name);
+        if (email) store.set("planner-email", email);
+        state.dirty.clear();
+        emailDirty = false;
+        saveMsg.textContent = `Saved. Thanks, ${state.name.split(" ")[0]}!`;
+        await refreshData();
+        cards.forEach(c => c.refresh());
+        applyName();
+      } catch (err) {
+        saveMsg.textContent = err.message; saveMsg.classList.add("warn");
+        if (err.code === "full" || err.code === "stale") { await refreshData(); cards.forEach(c => { c.refresh(); c.live(); }); }
+      } finally {
+        saving = false; saveBtn.disabled = false;
+      }
+    }
+
+    return {
+      dirty: () => state.dirty.size > 0 || (emailDirty && !!emailInput && !!emailInput.value.trim()),
+      refresh() { cards.forEach(c => { c.refresh(); c.live(); }); }
+    };
+  }
+
+  /* ===================== Host views ===================== */
+  let flash = "";
+  const hostPass = () => session.get("planner-pass", "");
+  async function hostCall(body) {
+    // pageUrl lets the server link GroupMe posts back to this page.
+    try { return await call("POST", Object.assign({ passcode: hostPass(), pageUrl: location.href.split("#")[0] }, body)); }
+    catch (err) { if (err.code === "auth") session.del("planner-pass"); throw err; }
+  }
+  let hostJustLoaded = false; // set after a save so the redraw that follows doesn't load twice
+  async function loadHost() { hostData = normalize(await hostCall({ action: "hostSnapshot" })); }
+  async function afterWrite(message) {
+    flash = message || "";
+    await Promise.all([loadHost(), refreshData()]);
+    hostJustLoaded = true;
+  }
+  const statusEl = () => h("div", { class: "status", role: "status", "aria-live": "polite" });
+  const label = (text, id) => h("label", { class: "field", for: id }, text);
+  function select(options, value, id, aria) {
+    return h("select", { id, "aria-label": aria || null }, options.map(([v, l]) => h("option", { value: v, selected: v === value }, l)));
+  }
+  function showFlash() { if (flash) { add(app, h("div", { class: "flash", role: "status" }, flash)); flash = ""; } }
+  let hostBusy = false;
+  async function act(btn, st, fn) {
+    if (hostBusy) return;
+    hostBusy = true; btn.disabled = true; st.textContent = "Saving…";
+    try { const msg = await fn(); st.textContent = typeof msg === "string" ? msg : ""; }
+    catch (err) {
+      st.textContent = err.message;
+      if (err.code === "auth") setTimeout(route, 1200);
+    } finally { hostBusy = false; btn.disabled = false; }
+  }
+  function moveBtn(kind, id, dir, disabled, st) {
+    const b = h("button", { type: "button", class: "mini", disabled, "aria-label": dir < 0 ? "Move up" : "Move down",
+      onclick: () => act(b, st, async () => { await hostCall({ action: "move", kind, id, dir }); await afterWrite(); route(); }) }, dir < 0 ? "↑" : "↓");
+    return b;
+  }
+
+  function viewHostLogin(message) {
+    clear(app);
+    document.title = "Host tools | " + siteTitle();
+    const pass = h("input", { type: "password", id: "h-pass", autocomplete: "current-password", placeholder: "Host passcode" });
+    const st = statusEl();
+    st.textContent = message || "";
+    const go = async () => {
+      if (!pass.value) { st.textContent = "Enter the host passcode."; return; }
+      st.textContent = "Checking…";
+      session.set("planner-pass", pass.value);
+      try { await hostCall({ action: "checkPass" }); route(); }
+      catch (err) { st.textContent = err.message; }
+    };
+    pass.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+    add(app, [h("a", { class: "back", href: "#/" }, "‹ Back to the page"), h("h1", null, "Host tools"),
+      h("p", { class: "sub" }, "Enter the host passcode to manage sections, events, and blocks."),
+      label("Host passcode", "h-pass"), pass, h("button", { type: "button", class: "btn", onclick: go }, "Unlock"), st]);
+    return null;
+  }
+
+  async function ensureHost(seq) {
+    if (!hostPass()) { viewHostLogin(); return false; }
+    if (hostData && hostJustLoaded) { hostJustLoaded = false; return true; }
+    if (!hostData) { clear(app); add(app, h("p", { class: "hint" }, "Loading host tools…")); }
+    try { await loadHost(); }
+    catch (err) {
+      if (seq !== routeSeq) return false;
+      if (err.code === "auth") viewHostLogin(err.message);
+      else { clear(app); add(app, [h("a", { class: "back", href: "#/" }, "‹ Back to the page"), h("div", { class: "notice" }, err.message)]); }
+      return false;
+    }
+    return seq === routeSeq;
+  }
+
+  async function viewHost(seq) {
+    if (!(await ensureHost(seq))) return null;
+    clear(app);
+    document.title = "Host tools | " + siteTitle();
+    add(app, [h("a", { class: "back", href: "#/" }, "‹ Back to the page"),
+      h("div", { class: "row" }, h("h1", null, "Host tools"),
+        h("button", { type: "button", class: "linkbtn", onclick: () => { session.del("planner-pass"); hostData = null; route(); } }, "Lock"))]);
+    showFlash();
+
+    // Home page: title, subtitle, background photo
+    const tIn = h("input", { type: "text", id: "h-site-title", maxLength: 80, value: hostData.settings.siteTitle || DEFAULT_TITLE });
+    const sIn = h("input", { type: "text", id: "h-site-sub", maxLength: 120, value: hostData.settings.siteSub || "" });
+    const pIn = h("input", { type: "text", id: "h-photo", maxLength: 500, value: hostData.settings.homePhoto || "", placeholder: "background.jpg or https://...", autocapitalize: "off", spellcheck: "false" });
+    const fSel = select([["top", "Keep the top in view"], ["center", "Keep the middle in view"], ["bottom", "Keep the bottom in view"]], hostData.settings.homePhotoFocus || "center", "h-photo-focus");
+    const prev = h("img", { class: "photo-preview", alt: "Background photo preview", hidden: true });
+    const prevMsg = h("p", { class: "hint" });
+    prev.addEventListener("load", () => { prev.hidden = false; prevMsg.textContent = ""; });
+    prev.addEventListener("error", () => { prev.hidden = true; prevMsg.textContent = "Couldn’t load that photo. Check the file name or link."; });
+    let prevTimer = null;
+    function preview() {
+      const v = pIn.value.trim();
+      prevMsg.textContent = "";
+      if (!v) { prev.hidden = true; prev.removeAttribute("src"); return; }
+      if (!PHOTO_RE.test(v)) { prev.hidden = true; prevMsg.textContent = "Use a file name like background.jpg, or a link that starts with https://."; return; }
+      prev.src = v;
+    }
+    pIn.addEventListener("input", () => { clearTimeout(prevTimer); prevTimer = setTimeout(preview, 600); });
+    preview();
+    const st1 = statusEl();
+    const b1 = h("button", { type: "button", class: "btn", onclick: () => act(b1, st1, async () => {
+      const photo = pIn.value.trim();
+      if (photo && !PHOTO_RE.test(photo)) throw new Error("Use a photo file name like background.jpg, or a link that starts with https://.");
+      await hostCall({ action: "saveSettings", siteTitle: tIn.value, siteSub: sIn.value, homePhoto: photo, homePhotoFocus: fSel.value });
+      await afterWrite("Home page saved."); route();
+    }) }, "Save home page");
+    add(app, h("section", { class: "card" }, h("h2", null, "Home page"),
+      label("Title", "h-site-title"), tIn, label("Subtitle", "h-site-sub"), sIn,
+      label("Background photo (optional)", "h-photo"),
+      h("p", { class: "hint", style: "margin:-2px 0 8px" }, "Upload the photo to your GitHub repository next to index.html and type its file name here, or paste a link that starts with https://. Leave it empty for no photo."),
+      pIn, prev, prevMsg,
+      label("Which part of the photo matters most?", "h-photo-focus"), fSel, b1, st1));
+
+    add(app, groupMeCard());
+
+    // New section
+    const nIn = h("input", { type: "text", id: "h-new-section", maxLength: 60, placeholder: "Example: Trip planning" });
+    const st2 = statusEl();
+    const b2 = h("button", { type: "button", class: "btn", onclick: () => act(b2, st2, async () => {
+      if (!nIn.value.trim()) throw new Error("Give the section a name.");
+      await hostCall({ action: "saveSection", name: nIn.value });
+      await afterWrite("Section added."); route();
+    }) }, "Add section");
+    add(app, h("section", { class: "card" }, h("h2", null, "Add a section"),
+      h("p", { class: "hint", style: "margin-top:0" }, "Sections group events on the home page, like “2026 Holidays.”"),
+      label("Section name", "h-new-section"), nIn, b2, st2));
+
+    // Sections with their events
+    add(app, h("h2", { class: "section" }, "Sections and events"));
+    hostData.sections.forEach((sec, i, list) => add(app, sectionCard(sec, i, list.length)));
+    const known = new Set(hostData.sections.map(s => s.id));
+    const loose = hostData.events.filter(e => !known.has(e.sectionId));
+    if (loose.length) add(app, h("section", { class: "card" }, h("h3", null, "Not in a section"),
+      h("p", { class: "hint" }, "These events don’t show under a section. Open one and pick a section for it."),
+      h("ul", { class: "list mt" }, loose.map(ev => h("li", null, h("div", { class: "top" }, h("a", { href: "#/host/e/" + encodeURIComponent(ev.id) }, ev.title), h("span", { class: "badge" }, EVENT_STATUS_LABEL[ev.status] || ev.status)))))));
+    if (!hostData.sections.length) add(app, h("p", { class: "hint" }, "Add a section first, then add events to it."));
+    return null;
+  }
+
+  const EVENT_STATUS_LABEL = { open: "Open", closed: "Closed", hidden: "Hidden draft" };
+
+  function sectionCard(sec, i, n) {
+    const st = statusEl();
+    const nameIn = h("input", { type: "text", id: `sec-${sec.id}`, maxLength: 60, value: sec.name });
+    const statusSel = select([["active", "Showing on the page"], ["hidden", "Hidden"], ["archived", "Remove"]], sec.status, `secst-${sec.id}`);
+    const save = h("button", { type: "button", class: "btn small", onclick: () => act(save, st, async () => {
+      if (statusSel.value === "archived" && !confirm(`Remove “${sec.name}” from the page? Its events will move to “Not in a section” here.`)) throw new Error("Nothing changed.");
+      await hostCall({ action: "saveSection", id: sec.id, name: nameIn.value, status: statusSel.value });
+      await afterWrite("Section saved."); route();
+    }) }, "Save section");
+    const events = hostData.events.filter(e => e.sectionId === sec.id);
+    const evSt = statusEl();
+    const evList = events.length ? h("ul", { class: "list" }, events.map((ev, j) => h("li", null,
+      h("div", { class: "top" }, h("a", { href: "#/host/e/" + encodeURIComponent(ev.id) }, ev.title), h("span", { class: "badge" }, EVENT_STATUS_LABEL[ev.status] || ev.status)),
+      h("div", { class: "tools", style: "margin-top:6px" },
+        h("a", { class: "mini", href: "#/host/e/" + encodeURIComponent(ev.id) }, "Edit"),
+        moveBtn("event", ev.id, -1, j === 0, evSt), moveBtn("event", ev.id, 1, j === events.length - 1, evSt))))) : h("p", { class: "hint" }, "No events yet.");
+
+    const titleIn = h("input", { type: "text", maxLength: 80, placeholder: "New event name", "aria-label": `New event name for ${sec.name}` });
+    const starter = select([["party", "Start with RSVP, dates, and sign-up list"], ["rsvp", "Start with RSVP only"], ["blank", "Start blank"]], "party", null, "Starting blocks");
+    const st3 = statusEl();
+    const addBtn = h("button", { type: "button", class: "btn small", onclick: () => act(addBtn, st3, async () => {
+      if (!titleIn.value.trim()) throw new Error("Give the event a name.");
+      const r = await hostCall({ action: "saveEvent", sectionId: sec.id, title: titleIn.value, starter: starter.value });
+      await afterWrite("Event added as a hidden draft. Set it up, then switch it to Open.");
+      location.hash = "#/host/e/" + encodeURIComponent(r.id);
+    }) }, "Add event");
+
+    return h("section", { class: "card" },
+      h("div", { class: "row" }, h("h3", null, sec.name), h("div", { class: "tools" }, moveBtn("section", sec.id, -1, i === 0, st), moveBtn("section", sec.id, 1, i === n - 1, st))),
+      sec.status === "hidden" ? h("p", { class: "hint" }, "Hidden from guests.") : null,
+      label("Section name", `sec-${sec.id}`), nameIn, label("Show on the page?", `secst-${sec.id}`), statusSel,
+      h("div", { class: "tools", style: "margin-top:12px" }, save), st,
+      h("h3", { class: "mt" }, "Events"), evList, evSt,
+      h("div", { class: "addrow" }, titleIn, starter, h("div", null, addBtn)), st3);
+  }
+
+  let openBlock = "";
+  async function viewHostEvent(id, seq) {
+    if (!(await ensureHost(seq))) return null;
+    let ev = hostData.event(id);
+    if (!ev) {
+      // It may have been added from another device; reload once before giving up.
+      try { await loadHost(); } catch (err) { /* handled below */ }
+      if (seq !== routeSeq) return null;
+      ev = hostData.event(id);
+    }
+    clear(app);
+    add(app, h("a", { class: "back", href: "#/host" }, "‹ Host tools"));
+    if (!ev) { add(app, h("div", { class: "notice" }, "That event isn’t here anymore. It may have been removed.")); return null; }
+    document.title = `Edit ${ev.title} | ${siteTitle()}`;
+    add(app, [h("h1", null, ev.title), h("p", { class: "hint" }, ev.status === "hidden"
+      ? "Hidden draft. Guests can’t see it until you set the status to Open or Closed."
+      : h("a", { href: "#/e/" + encodeURIComponent(ev.id) }, "View the event page"))]);
+    showFlash();
+
+    // Event details
+    const f = {
+      title: h("input", { type: "text", id: "e-title", maxLength: 80, value: ev.title }),
+      section: select(hostData.sections.map(s => [s.id, s.name]), ev.sectionId, "e-section"),
+      theme: select(THEMES, ev.theme, "e-theme"),
+      description: h("textarea", { id: "e-desc", maxLength: 1500, value: ev.description }),
+      location: h("input", { type: "text", id: "e-loc", maxLength: 120, value: ev.location, placeholder: "Address or place name" }),
+      time: h("input", { type: "text", id: "e-time", maxLength: 60, value: ev.time, placeholder: "Example: Saturday, 6 PM" }),
+      status: select([["open", "Open for answers"], ["closed", "Closed (people can still see results)"], ["hidden", "Hidden draft"], ["archived", "Remove from the page"]], ev.status, "e-status")
+    };
+    const st = statusEl();
+    const save = h("button", { type: "button", class: "btn", onclick: () => act(save, st, async () => {
+      if (!f.title.value.trim()) throw new Error("Give the event a name.");
+      if (f.status.value === "archived" && !confirm(`Remove “${ev.title}”? Its answers stay in the sheet.`)) throw new Error("Nothing changed.");
+      const r = await hostCall({ action: "saveEvent", id: ev.id, title: f.title.value, sectionId: f.section.value, theme: f.theme.value, description: f.description.value, location: f.location.value, time: f.time.value, status: f.status.value });
+      await afterWrite(f.status.value === "archived" ? "Event removed." : r.posted ? "Event saved and announced in GroupMe." : "Event saved.");
+      if (f.status.value === "archived") location.hash = "#/host"; else route();
+    }) }, "Save event details");
+    add(app, h("section", { class: "card" }, h("h2", null, "Event details"),
+      label("Event name", "e-title"), f.title, label("Section", "e-section"), f.section, label("Page theme", "e-theme"), f.theme,
+      label("Description", "e-desc"), f.description, label("Location (optional)", "e-loc"), f.location, label("Time (optional)", "e-time"), f.time,
+      label("Status", "e-status"), f.status, save, st));
+
+    // Email reminder and group chat post (GroupMe or WhatsApp)
+    add(app, reminderCard(ev));
+    add(app, groupChatCard(ev));
+
+    // Blocks
+    const blocks = hostData.blocksOf(ev.id);
+    add(app, [h("h2", { class: "section" }, "Page blocks"), h("p", { class: "hint", style: "margin-top:-4px" }, "Blocks show on the event page in this order. Tap one to edit it.")]);
+    blocks.forEach((b, i) => add(app, blockEditor(b, i, blocks.length)));
+    if (!blocks.length) add(app, h("p", { class: "hint" }, "No blocks yet. Add one below."));
+
+    const typeSel = select(Object.keys(TYPES).map(k => [k, `${TYPES[k].label}: ${TYPES[k].hint}`]), "poll", "e-newtype");
+    const st2 = statusEl();
+    const addB = h("button", { type: "button", class: "btn", onclick: () => act(addB, st2, async () => {
+      const T = TYPES[typeSel.value];
+      const r = await hostCall({ action: "saveBlock", eventId: ev.id, type: typeSel.value, title: T.label === "Info" ? "Details" : T.label, config: T.defaults() });
+      openBlock = r.id;
+      await afterWrite("Block added. Fill it in below."); route();
+    }) }, "Add block");
+    add(app, h("section", { class: "card section" }, h("h2", null, "Add a block"), label("Block type", "e-newtype"), typeSel, addB, st2));
+    return null;
+  }
+
+  function blockEditor(b, i, n) {
+    const T = TYPES[b.type];
+    const st = statusEl();
+    const titleIn = h("input", { type: "text", id: `bt-${b.id}`, maxLength: 80, value: b.title });
+    const eds = T.fields.map(fd => fieldEditor(fd, b.config[fd.key], b.id));
+    let suggest = null;
+    if (b.type === "calendar") {
+      // Offer the most popular day from this event's date poll as the final date.
+      const dateEd = eds.find(e => e.key === "date");
+      const counts = {};
+      hostData.blocksOf(b.eventId).filter(x => x.type === "dates").forEach(db => hostData.rowsOf(db.id).forEach(r =>
+        arr(r.answer.days).forEach(d => { if (DATE_RE.test(d)) counts[d] = (counts[d] || 0) + 1; })));
+      const top = Object.keys(counts).sort((a, z) => counts[z] - counts[a] || (a < z ? -1 : 1))[0];
+      if (top && dateEd && dateEd.set) suggest = h("div", { class: "notice" },
+        `Most popular day in your date poll: ${pretty(top)} (${plural(counts[top], "person", "people")}).`,
+        h("div", null, h("button", { type: "button", class: "linkbtn", onclick: () => dateEd.set(top) }, "Use this date")));
+    }
+    const save = h("button", { type: "button", class: "btn small", onclick: () => act(save, st, async () => {
+      const config = {};
+      eds.forEach(e => { config[e.key] = e.read(); });
+      await hostCall({ action: "saveBlock", id: b.id, title: titleIn.value, config });
+      openBlock = b.id;
+      await afterWrite("Block saved."); route();
+    }) }, "Save block");
+    const remove = h("button", { type: "button", class: "btn small ghost", onclick: () => act(remove, st, async () => {
+      if (!confirm(`Remove “${b.title || T.label}”? Its answers stay in the sheet.`)) throw new Error("Nothing changed.");
+      await hostCall({ action: "saveBlock", id: b.id, status: "archived" });
+      await afterWrite("Block removed."); route();
+    }) }, "Remove");
+    const det = h("details", { class: "editor", open: openBlock === b.id },
+      h("summary", null, h("span", null, b.title || T.label), h("span", { class: "badge" }, T.label)),
+      h("div", { class: "editor-body" },
+        h("p", { class: "hint", style: "margin-top:0" }, T.hint), suggest,
+        label("Block title", `bt-${b.id}`), titleIn, eds.map(e => e.el),
+        h("div", { class: "tools", style: "margin-top:16px" }, save, remove, moveBtn("block", b.id, -1, i === 0, st), moveBtn("block", b.id, 1, i === n - 1, st)), st));
+    if (openBlock === b.id) setTimeout(() => det.scrollIntoView({ block: "start" }), 0);
+    return det;
+  }
+
+  function reminderCard(ev) {
+    const info = hostData.contacts[ev.id] || { all: 0, yes: 0, yesmaybe: 0, hasRsvp: false };
+    const last = hostData.lastReminders[ev.id];
+    const sendable = ev.status === "open" || ev.status === "closed";
+    const opts = info.hasRsvp ? [["yes", "People who are going"], ["yesmaybe", "Going and maybe"], ["all", "Everyone who left an email"]] : [["all", "Everyone who left an email"]];
+    const aud = select(opts, opts[0][0], "r-aud");
+    const countEl = h("p", { class: "hint", "aria-live": "polite" });
+    const subj = h("input", { type: "text", id: "r-subj", maxLength: 120, value: `Reminder: ${ev.title}` });
+    const msg = h("textarea", { id: "r-msg", maxLength: 2000, value: `Quick reminder about ${ev.title}. Tap the link below to see the details, and update your answer if anything changed.` });
+    const st = statusEl();
+    const countFor = () => Number(info[aud.value]) || 0;
+    function updateCount() {
+      countEl.textContent = `${plural(countFor(), "person", "people")} in this group left an email.` +
+        (hostData.mailQuota != null ? ` Google lets you send about ${hostData.mailQuota} more emails today.` : "");
+    }
+    aud.addEventListener("change", updateCount);
+    updateCount();
+    const btn = h("button", { type: "button", class: "btn", disabled: !sendable, onclick: () => act(btn, st, async () => {
+      const n = countFor();
+      if (!n) throw new Error("Nobody in that group has left an email yet.");
+      if (!msg.value.trim()) throw new Error("Write a short message first.");
+      if (!confirm(`Send this reminder to ${plural(n, "person", "people")}?`)) throw new Error("Not sent.");
+      const link = location.href.split("#")[0] + "#/e/" + encodeURIComponent(ev.id);
+      const r = await hostCall({ action: "sendReminder", eventId: ev.id, audience: aud.value, subject: subj.value, message: msg.value, link });
+      await afterWrite(`Reminder sent to ${plural(Number(r.sent) || 0, "person", "people")}.` + (r.failed ? ` ${r.failed} couldn’t be delivered.` : ""));
+      route();
+    }) }, "Send reminder email");
+    const lastText = last ? `Last reminder: ${new Date(last.sentAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}, sent to ${plural(Number(last.sent) || 0, "person", "people")}.` : "";
+    return h("section", { class: "card section" }, h("h2", null, "Email reminder"),
+      h("p", { class: "hint", style: "margin-top:0" }, "Emails come from your Gmail, one at a time, so nobody sees anyone else’s address."),
+      sendable ? null : h("p", { class: "hint" }, "Set the event to Open or Closed first, so guests can see the page the email links to."),
+      lastText ? h("p", { class: "hint" }, lastText) : null,
+      label("Send to", "r-aud"), aud, countEl, label("Subject", "r-subj"), subj, label("Message", "r-msg"), msg, btn, st);
+  }
+
+  const shortStamp = iso => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+  function groupMeCard() {
+    const gm = hostData.groupme || {};
+    const st = statusEl();
+    const idIn = h("input", { type: "text", id: "gm-id", maxLength: 64, autocomplete: "off", autocapitalize: "off", spellcheck: "false",
+      placeholder: gm.connected ? "Connected. Paste a new Bot ID only to change it." : "Paste your Bot ID" });
+    const newCb = h("input", { type: "checkbox", id: "gm-new", checked: !!gm.newEvents });
+    const dayCb = h("input", { type: "checkbox", id: "gm-day", checked: !!gm.daily });
+    const save = h("button", { type: "button", class: "btn", onclick: () => act(save, st, async () => {
+      const id = idIn.value.trim();
+      if (!gm.connected && !id) throw new Error("Paste your GroupMe Bot ID first.");
+      const r = await hostCall({ action: "saveGroupMe", botId: id || undefined, newEvents: newCb.checked, daily: dayCb.checked });
+      await afterWrite(r.warning ? `GroupMe settings saved. ${r.warning}` : "GroupMe settings saved.");
+      route();
+    }) }, "Save GroupMe settings");
+    const test = h("button", { type: "button", class: "btn small ghost", disabled: !gm.connected, onclick: () => act(test, st, async () => {
+      await hostCall({ action: "testGroupMe" });
+      return "Test message sent. Check your group.";
+    }) }, "Send test message");
+    const disc = h("button", { type: "button", class: "btn small ghost", onclick: () => act(disc, st, async () => {
+      if (!confirm("Disconnect GroupMe? The planner will stop posting in your group.")) throw new Error("Nothing changed.");
+      await hostCall({ action: "saveGroupMe", disconnect: true, newEvents: false, daily: false });
+      await afterWrite("GroupMe disconnected."); route();
+    }) }, "Disconnect");
+    return h("section", { class: "card" }, h("h2", null, "GroupMe alerts"),
+      h("p", { class: "hint", style: "margin-top:0" }, gm.connected
+        ? "Connected. The planner can post in your group, and everyone there gets a push notification."
+        : "Post new events and reminders straight into your GroupMe group. Everyone in the group gets a push notification."),
+      gm.connected ? null : h("ol", { class: "steps" },
+        h("li", null, "Open ", h("a", { href: "https://dev.groupme.com/bots", target: "_blank", rel: "noopener noreferrer" }, "dev.groupme.com/bots"), " and sign in with your GroupMe account."),
+        h("li", null, "Tap Create Bot, choose your group, and give it a name like Trip Planner. Leave the callback URL empty."),
+        h("li", null, "Copy the Bot ID and paste it below.")),
+      label("Bot ID", "gm-id"), idIn,
+      h("div", { class: "toggle" }, newCb, h("label", { for: "gm-new" }, "Post when an event opens")),
+      h("div", { class: "toggle" }, dayCb, h("label", { for: "gm-day" }, "Post a reminder the morning before each event (uses the Add to calendar date)")),
+      gm.daily && !gm.dailyScheduled ? h("p", { class: "hint" }, "Day-before reminders aren’t scheduled yet. Run installDailyReminders once in Apps Script.") : null,
+      save, h("div", { class: "tools", style: "margin-top:10px" }, test, gm.connected ? disc : null), st);
+  }
+
+  function groupChatCard(ev) {
+    const gm = hostData.groupme || {};
+    const last = hostData.lastGroupMe[ev.id];
+    const sendable = ev.status === "open" || ev.status === "closed";
+    const msg = h("textarea", { id: "gm-msg", maxLength: 800, value: `Reminder: ${ev.title}. Tap the link for the details, and update your answer if anything changed.` });
+    const st = statusEl();
+    const fullText = () => `${msg.value.trim()}\n\nDetails: ${eventLink(ev)}`;
+    const wa = h("a", { class: "btn ghost" + (sendable ? "" : " disabled"), target: "_blank", rel: "noopener noreferrer", "aria-disabled": sendable ? null : "true" }, "Share to WhatsApp");
+    const syncWa = () => { if (sendable) wa.href = whatsappLink(fullText()); };
+    msg.addEventListener("input", syncWa);
+    syncWa();
+    const btn = h("button", { type: "button", class: "btn", disabled: !gm.connected || !sendable, onclick: () => act(btn, st, async () => {
+      if (!msg.value.trim()) throw new Error("Write a short message first.");
+      await hostCall({ action: "postGroupMe", eventId: ev.id, message: msg.value });
+      await afterWrite("Posted in GroupMe."); route();
+    }) }, "Post in GroupMe");
+    const note = !sendable ? "Set the event to Open or Closed first, so the group can see the page."
+      : "Sends this message with a link to the event. GroupMe posts right away. WhatsApp opens with the message filled in, and you pick the group and tap Send.";
+    return h("section", { class: "card section" }, h("h2", null, "Group chat post"),
+      h("p", { class: "hint", style: "margin-top:0" }, note),
+      gm.connected ? null : h("p", { class: "hint" }, "GroupMe isn’t connected. You can connect it on the Host tools page."),
+      last ? h("p", { class: "hint" }, `Last GroupMe post for this event: ${shortStamp(last.sentAt)}.`) : null,
+      label("Message", "gm-msg"), msg, btn, h("div", { style: "margin-top:10px" }, wa), st);
+  }
+
+  function fieldEditor(fd, v, uid) {
+    const id = `fe-${uid}-${fd.key}`;
+    const lines = s => String(s || "").split("\n").map(x => x.trim()).filter(Boolean);
+    if (fd.kind === "toggle") {
+      const cb = h("input", { type: "checkbox", id, checked: v === undefined ? false : !!v });
+      return { key: fd.key, el: h("div", { class: "toggle" }, cb, h("label", { for: id }, fd.label)), read: () => cb.checked };
+    }
+    if (fd.kind === "number") {
+      const inp = h("input", { type: "number", id, min: fd.min, max: fd.max, inputmode: "numeric", value: String(v == null ? fd.min : v) });
+      return { key: fd.key, el: [label(fd.label, id), inp], read: () => clampInt(inp.value, fd.min, fd.max, fd.min) };
+    }
+    if (fd.kind === "text") {
+      const inp = h("input", { type: "text", id, maxLength: 200, value: String(v || "") });
+      return { key: fd.key, el: [label(fd.label, id), inp], read: () => inp.value.trim() };
+    }
+    if (fd.kind === "textarea") {
+      const ta = h("textarea", { id, maxLength: 3000, value: String(v || "") });
+      return { key: fd.key, el: [label(fd.label, id), ta], read: () => ta.value };
+    }
+    if (fd.kind === "lines") {
+      const ta = h("textarea", { id, value: arr(v).join("\n") });
+      return { key: fd.key, el: [label(fd.label, id), ta], read: () => [...new Set(lines(ta.value))] };
+    }
+    if (fd.kind === "slots") {
+      const items = Array.isArray(v) ? v : [];
+      const ta = h("textarea", { id, value: items.map(it => (it.slots ? `${it.label} x${it.slots}` : it.label)).join("\n") });
+      return { key: fd.key, el: [label(fd.label, id), ta], read: () => lines(ta.value).map(l => {
+        const m = l.match(/^(.*?)\s+x\s*(\d+)$/i);
+        return m ? { label: m[1].trim(), slots: Number(m[2]) } : { label: l, slots: 0 };
+      }).filter(x => x.label) };
+    }
+    if (fd.kind === "links") {
+      const items = Array.isArray(v) ? v : [];
+      const ta = h("textarea", { id, value: items.map(l => `${l.label} | ${l.url}`).join("\n") });
+      return { key: fd.key, el: [label(fd.label, id), ta], read: () => lines(ta.value).map(l => {
+        const i = l.lastIndexOf("|");
+        const lab = i >= 0 ? l.slice(0, i).trim() : "", url = (i >= 0 ? l.slice(i + 1) : l).trim();
+        return { label: lab || url, url };
+      }).filter(x => /^https?:\/\//i.test(x.url)) };
+    }
+    if (fd.kind === "days") {
+      const sel = new Set(arr(v).filter(d => DATE_RE.test(d)));
+      const now = new Date();
+      let y = now.getFullYear(), m = now.getMonth() + 1;
+      const first = [...sel].sort()[0];
+      if (first) { const p = parts(first); if (p[0] < y || (p[0] === y && p[1] < m)) { y = p[0]; m = p[1]; } }
+      const mount = h("div");
+      const tk = todayKey();
+      mountCal(mount, { title: "Date options", months: monthsFrom(y, m, 18), allowed: k => k >= tk || sel.has(k), selected: sel, legend: "Tap every date you’re considering. Pick one if the date is set." });
+      return { key: fd.key, el: [h("div", { class: "field" }, fd.label), mount], read: () => [...sel].sort() };
+    }
+    if (fd.kind === "day") {
+      const sel = new Set(DATE_RE.test(String(v || "")) ? [String(v)] : []);
+      const mount = h("div", { style: "margin-top:14px" });
+      const tk = todayKey();
+      const draw = () => {
+        const now = new Date();
+        let y = now.getFullYear(), m = now.getMonth() + 1;
+        const first = [...sel][0];
+        if (first) { const p = parts(first); if (p[0] < y || (p[0] === y && p[1] < m)) { y = p[0]; m = p[1]; } }
+        mountCal(mount, { title: fd.label, months: monthsFrom(y, m, 18), allowed: k => k >= tk || sel.has(k), selected: sel, single: true, legend: "Tap a day to pick it. Tap it again to clear it." });
+      };
+      draw();
+      return { key: fd.key, el: mount, read: () => [...sel][0] || "", set: k => { sel.clear(); if (k) sel.add(k); draw(); } };
+    }
+    if (fd.kind === "time") {
+      const inp = h("input", { type: "time", id, step: 300, value: TIME_RE.test(String(v || "")) ? String(v) : "" });
+      const clearBtn = h("button", { type: "button", class: "linkbtn", onclick: () => { inp.value = ""; } }, "Clear");
+      return { key: fd.key, el: [label(fd.label, id), h("div", { class: "timerow" }, inp, clearBtn)], read: () => { const t = String(inp.value || "").slice(0, 5); return TIME_RE.test(t) ? t : ""; } };
+    }
+    if (fd.kind === "zone") {
+      const opts = ZONES.slice(), dz = deviceZone(), cur = String(v || "");
+      if (zoneOk(dz) && !opts.some(o => o[0] === dz)) opts.unshift([dz, zoneLabel(dz) + " (this device)"]);
+      if (zoneOk(cur) && !opts.some(o => o[0] === cur)) opts.unshift([cur, zoneLabel(cur)]);
+      const sel = select(opts, zoneOk(cur) ? cur : (zoneOk(dz) ? dz : "America/New_York"), id);
+      return { key: fd.key, el: [label(fd.label, id), sel], read: () => sel.value };
+    }
+    if (fd.kind === "choices") {
+      const on = new Set(arr(v));
+      const boxes = fd.options.map(([k, l]) => {
+        const cid = `${id}-${k}`;
+        const cb = h("input", { type: "checkbox", id: cid, checked: on.has(k) });
+        return { k, cb, el: h("div", { class: "toggle", style: "margin-top:8px" }, cb, h("label", { for: cid }, l)) };
+      });
+      return { key: fd.key, el: [h("div", { class: "field" }, fd.label), boxes.map(x => x.el)], read: () => boxes.filter(x => x.cb.checked).map(x => x.k) };
+    }
+    return { key: fd.key, el: null, read: () => v };
+  }
+
+  /* ===================== Router ===================== */
+  let current = null, routeSeq = 0, lastHash = location.hash || "#/", skipGuard = false;
+  function route() {
+    const seq = ++routeSeq;
+    setPhoto(null);
+    const hash = location.hash || "#/";
+    let m, result;
+    if (hash === "#/host") result = viewHost(seq);
+    else if ((m = hash.match(/^#\/host\/e\/(.+)$/))) result = viewHostEvent(decodeURIComponent(m[1]), seq);
+    else if ((m = hash.match(/^#\/e\/(.+)$/))) result = viewEvent(decodeURIComponent(m[1]));
+    else result = viewHome();
+    current = null;
+    Promise.resolve(result).then(v => { if (seq === routeSeq) current = v || null; });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener("hashchange", () => {
+    if (skipGuard) { skipGuard = false; lastHash = location.hash || "#/"; return; }
+    if (current && current.dirty && current.dirty() && !confirm("You have unsaved answers. Leave this page anyway?")) {
+      skipGuard = true; location.hash = lastHash; return;
+    }
+    lastHash = location.hash || "#/";
+    route();
+  });
+  window.addEventListener("beforeunload", e => {
+    if (current && current.dirty && current.dirty()) { e.preventDefault(); e.returnValue = ""; }
+  });
+
+  /* ===================== Start ===================== */
+  refreshData().then(route);
+  setInterval(async () => {
+    if (document.hidden || !API_URL || (location.hash || "").startsWith("#/host")) return;
+    if (await refreshData() && current && current.refresh) current.refresh();
+  }, REFRESH_MS);
+})();
+</script>
+</body>
+</html>
